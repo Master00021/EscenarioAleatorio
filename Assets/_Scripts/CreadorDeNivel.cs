@@ -12,6 +12,7 @@ public class CreadorDeNivel : MonoBehaviour
 
     [SerializeField] private GameObject _puntoInicio;
     [SerializeField] private GameObject _puntoFinal;
+    [SerializeField] private Objects Instance;
 
     /*  LO HARE EN HORIZONTAL
          __ __ __ __
@@ -21,7 +22,7 @@ inicio->|__|__|__|__|
         |__|__|__|__|<-final
 
     Random:
-        __ __ __ __
+         __ __ __ __
         |_1|_2|__|__|
         |__|_3|__|__|
         |__|_4|_5|__|
@@ -33,7 +34,7 @@ inicio->|__|__|__|__|
         |_3|_4|_5|__|
         |__|__|_6|_7|
 
-        __ __ __ __
+         __ __ __ __
         |_1|_2|_3|__|
         |__|__|_4|_5|
         |__|__|__|_6|
@@ -42,33 +43,50 @@ inicio->|__|__|__|__|
     */
 
     private void Awake() {
+
+        Instance = GetComponent<Objects>();
+        
+        
+    }
+
+    private void Start() {
         
         for (int i = 0; i < _cantidadPiezas; i++) {
 
             int _piezaRandom = Random.Range(0, 5);
 
-            Instantiate(_piezas[_piezaRandom], _nuevaPosicion, Quaternion.Euler(0f, 0f, 0f));
+            if (i == 0) {
 
-            _nuevaPosicion = new Vector3();
+                Instantiate(_piezas[_piezaRandom], _puntoInicio.transform.position, Quaternion.identity);
+            }
+            else if (i == 6) {
 
-            if (i == _cantidadPiezas - 1)
-                Instantiate(_final, _nuevaPosicion, Quaternion.Euler(0f, 0f, 0f));
+                Instantiate(_piezas[_piezaRandom], _puntoFinal.transform.position, Quaternion.identity);
+            }
+            else  {
+
+                Instantiate(_piezas[_piezaRandom], Instance._nuevaPosicion, Quaternion.Euler(0f, 0f, 0f));
+            }
+
+            if (i == 6)
+                Instantiate(_final, _nuevaPosicion, Quaternion.identity);
+
         }
     }
 
     private void OnTriggerEnter(Collider other) {
         
-        if (other.CompareTag("Pieza")) {
+        if (other.CompareTag("Limite")) {
 
-            int _myID = gameObject.GetInstanceID();
-            int _otherID = gameObject.GetInstanceID();
+            // Que no spawnee la pieza en la posicion del collider
+        }
+        else if (other.CompareTag("Spawnable")) {
 
-            if (_myID > _otherID) {
+            // Spawnear el objeto
 
-                Destroy(other.gameObject, 5f);
-            }
-            else    
-                Destroy(gameObject, 5f);
+            print("Spawnable object");
+
+            _nuevaPosicion = other.transform.position;
         }
     }
 }
