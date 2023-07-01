@@ -1,92 +1,33 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class CreadorDeNivel : MonoBehaviour
 {
-    [SerializeField] private GameObject _final;
-    [SerializeField] private GameObject[] _piezas;
-    [SerializeField] private int _cantidadPiezas;
+    public static CreadorDeNivel Instance;
 
-    [SerializeField] private Vector3 _nuevaPosicion;
+    [SerializeField] internal GameObject[] _puertaEste;              // Prefabs que sean compatibles con esta puerta
+    [SerializeField] internal GameObject[] _puertaSur;               // Prefabs que sean compatibles con esta puerta
 
-    [SerializeField] private GameObject _puntoInicio;
-    [SerializeField] private GameObject _puntoFinal;
-    [SerializeField] private Objects Instance;
+    [SerializeField] internal List<GameObject> _piezasCreadas;
 
-    /*  LO HARE EN HORIZONTAL
-         __ __ __ __
-inicio->|__|__|__|__|
-        |__|__|__|__|
-        |__|__|__|__|
-        |__|__|__|__|<-final
+    [SerializeField] private GameObject _meta;                       // Meta
+    [SerializeField] private float _delaySpawnMeta;                  // Esperar a que se hayan spawneado todas las piezas
 
-    Random:
-         __ __ __ __
-        |_1|_2|__|__|
-        |__|_3|__|__|
-        |__|_4|_5|__|
-        |__|__|_6|_7|
-
-         __ __ __ __
-        |_1|__|__|__|
-        |_2|__|__|__|
-        |_3|_4|_5|__|
-        |__|__|_6|_7|
-
-         __ __ __ __
-        |_1|_2|_3|__|
-        |__|__|_4|_5|
-        |__|__|__|_6|
-        |__|__|__|_7|    
-
-    */
+    private bool _metaCreada;
 
     private void Awake() {
 
-        Instance = GetComponent<Objects>();
+        Instance = this;
         
-        
+        Invoke("SpawnMeta", _delaySpawnMeta);
     }
 
-    private void Start() {
-        
-        for (int i = 0; i < _cantidadPiezas; i++) {
+    private void SpawnMeta() {
 
-            int _piezaRandom = Random.Range(0, 5);
+        _metaCreada = true;
 
-            if (i == 0) {
-
-                Instantiate(_piezas[_piezaRandom], _puntoInicio.transform.position, Quaternion.identity);
-            }
-            else if (i == 6) {
-
-                Instantiate(_piezas[_piezaRandom], _puntoFinal.transform.position, Quaternion.identity);
-            }
-            else  {
-
-                Instantiate(_piezas[_piezaRandom], Instance._nuevaPosicion, Quaternion.Euler(0f, 0f, 0f));
-            }
-
-            if (i == 6)
-                Instantiate(_final, _nuevaPosicion, Quaternion.identity);
-
-        }
-    }
-
-    private void OnTriggerEnter(Collider other) {
-        
-        if (other.CompareTag("Limite")) {
-
-            // Que no spawnee la pieza en la posicion del collider
-        }
-        else if (other.CompareTag("Spawnable")) {
-
-            // Spawnear el objeto
-
-            print("Spawnable object");
-
-            _nuevaPosicion = other.transform.position;
-        }
+        Instantiate(_meta, _piezasCreadas[_piezasCreadas.Count - 1].transform.position, Quaternion.Euler(0f, 45f, 0f));
     }
 }

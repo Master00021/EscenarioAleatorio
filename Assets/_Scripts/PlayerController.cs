@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
 {
@@ -54,6 +55,21 @@ public class PlayerController : MonoBehaviour
         else
         {
             isGrounded = false;
+        }
+
+        if (Input.GetKeyDown(KeyCode.R)) {
+
+            PieceSpawner.LimitePiezas = 0;
+            SceneManager.LoadScene("EscenarioAleatorio", LoadSceneMode.Single);
+        }
+    }
+
+    private void OnTriggerEnter(Collider other) {
+        
+        if (other.CompareTag("NextLevel")) {
+
+            PieceSpawner.LimitePiezas = 0;
+            SceneManager.LoadScene("EscenarioAleatorio", LoadSceneMode.Single);
         }
     }
 }
