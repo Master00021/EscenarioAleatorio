@@ -1,66 +1,75 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
+[RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
-    public float speed = 5f; // Velocidad de movimiento
-    public float jumpHeight = 2f; // Altura del salto
-    private float ySpeed; // Velocidad vertical
+    [SerializeField] private InputActionReference _movementControl;
+    [SerializeField] private InputActionReference _jumpControl ;
 
-    private CharacterController controller;
-    private Vector3 moveDirection;
+    [SerializeField] private float _playerSpeed = 2.0f;
+    [SerializeField] private float _rotationSpeed = 4f;
+    [SerializeField] private float _jumpHeigth = 1.0f;
+    [SerializeField] private float _gravityValue = -9.81f;
+    
+    private CharacterController _controller;
+    private Transform _mainCameraTransform;
+    private Vector3 _playerVelocity;
+    private bool _groundedPlayer;
+    
 
-    private bool isJumping = false;
-    private bool isGrounded = true;
-
-    private void Start()
-    {
-        controller = GetComponent<CharacterController>();
+    private void Awake() {
+        
+        _controller = GetComponent<CharacterController>();
+        _mainCameraTransform = Camera.main.transform;
     }
 
-    private void Update()
-    {
-        // Movimiento horizontal
-        float moveHorizontal = Input.GetAxis("Horizontal");
-        // Movimiento vertical
-        float moveVertical = Input.GetAxis("Vertical");
+    private void OnEnable() {
+        
+        _movementControl.action.Enable();
+        _jumpControl.action.Enable();
+    }
 
-        // Calcula la dirección del movimiento
-        moveDirection = transform.forward * moveVertical + transform.right * moveHorizontal;
-        moveDirection *= speed;
+    private void OnDisable() {
+        
+        _movementControl.action.Disable();
+        _jumpControl.action.Disable();
+    }
 
-        // Salto
-        if (isGrounded && Input.GetButtonDown("Jump"))
-        {
-            isJumping = true;
-            ySpeed = Mathf.Sqrt(2f * jumpHeight * Mathf.Abs(Physics.gravity.y));
+    private void Update() {
+        
+        _groundedPlayer = _controller.isGrounded;
+
+        if (_groundedPlayer && _playerVelocity.y < 0) {
+
+            _playerVelocity.y = 0f;
         }
 
-        // Aplica la gravedad
-        ySpeed += Physics.gravity.y * Time.deltaTime;
+        Vector2 _movement = _movementControl.action.ReadValue<Vector2>();
 
-        // Aplica el movimiento vertical
-        moveDirection.y = ySpeed;
+        Vector3 _move = new Vector3(_movement.x, 0, _movement.y);
 
-        // Aplica el movimiento al CharacterController
-        controller.Move(moveDirection * Time.deltaTime);
+        _move = _mainCameraTransform.forward * _move.z + _mainCameraTransform.right * _move.x;
+        _move.y =  0f;
 
-        // Verifica si el CharacterController está en el suelo
-        if (controller.isGrounded)
-        {
-            isGrounded = true;
-            isJumping = false;
-            ySpeed = 0f;
-        }
-        else
-        {
-            isGrounded = false;
+        _controller.Move(_move * _playerSpeed * Time.deltaTime);
+
+        if (_jumpControl.action.triggered && _groundedPlayer) {
+
+            _playerVelocity.y += Mathf.Sqrt(_jumpHeigth * -3.0f * _gravityValue);
         }
 
-        if (Input.GetKeyDown(KeyCode.R)) {
+        _playerVelocity.y += _gravityValue * Time.deltaTime;
+        _controller.Move(_playerVelocity * Time.deltaTime);
 
-            PieceSpawner.LimitePiezas = 0;
-            SceneManager.LoadScene("EscenarioAleatorio", LoadSceneMode.Single);
+        if (_movement != Vector2.zero) {
+
+            float _targetAngle = Mathf.Atan2(_movement.x, _movement.y) * Mathf.Rad2Deg + _mainCameraTransform.eulerAngles.y;
+
+            Quaternion _rotation = Quaternion.Euler(0f, _targetAngle, 0f);
+
+            transform.rotation = Quaternion.Lerp(transform.rotation, _rotation, _rotationSpeed * Time.deltaTime);
         }
     }
 
@@ -69,7 +78,8 @@ public class PlayerController : MonoBehaviour
         if (other.CompareTag("NextLevel")) {
 
             PieceSpawner.LimitePiezas = 0;
-            SceneManager.LoadScene("EscenarioAleatorio", LoadSceneMode.Single);
+
+            SceneManager.LoadScene("EscenarioAleatorio");
         }
     }
 }
